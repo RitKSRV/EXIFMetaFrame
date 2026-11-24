@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EXIF Frame Studio</title>
+  <style>
+    :root {
+      --bg: #0d0f13;
+      --panel: #151820;
+      --card: #1c202a;
+      --border: #282e3c;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #008e5b;
+      --accent-hover: #00754b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 370px 1fr;
+    }
+
+    aside {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 650;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .dropzone {
+      border: 1.5px dashed #3b4252;
+      border-radius: 12px;
+      padding: 18px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(0, 142, 91, 0.1);
+    }
+
+    .dropzone strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .dropzone span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 2px 0 8px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .tpl-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      color: var(--text);
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .tpl-card:hover {
+      border-color: #4b5563;
+    }
+
+    .tpl-card.active {
+      border-color: var(--accent);
+      background: rgba(0, 142, 91, 0.12);
+    }
+
+    .tpl-swatch {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .swatch-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .tpl-name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tpl-tag {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: #d1d5db;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    input[readonly] {
+      opacity: 0.78;
+      cursor: default;
+      background: #101319;
+    }
+
+    input[readonly]:focus {
+      border-color: var(--border);
+    }
+
+    input[type="color"] {
+      width: 100%;
+      height: 32px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: #d1d5db;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      width: 100%;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn.secondary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn.secondary:hover:not(:disabled) {
+      background: #252a37;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      overflow: auto;
+      background: radial-gradient(circle at top, #181c24 0%, #0d0f13 70%);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      max-width: 380px;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: calc(100vh - 70px);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      border-radius: 2px;
+      display: none;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 16px;
+    }
+
+    @media (max-width: 900px) {
+      body { grid-template-columns: 1fr; }
+      aside { max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div>
+      <h1>EXIF Frame Studio</h1>
+      <div class="subtitle">Standalone MacBook HTML tool · Offline &amp; Free</div>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <strong>Drop a JPEG photo here</strong>
+      <span>or click to choose from Finder</span>
+      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png" hidden />
+    </div>
+    <div class="status" id="status">Select a photo to preview your EXIF frame.</div>
+
+    <div>
+      <div class="section-title">
+        <span>1. Templates</span>
+        <span id="activeTplLabel" style="text-transform:none; color:#d1d5db;">Fujifilm Signature</span>
+      </div>
+      <div class="template-grid" id="templateGrid"></div>
+    </div>
+
+    <div>
+      <div class="section-title">2. Tinker &amp; Customize</div>
+      <div class="row-3" style="margin-bottom:10px;">
+        <div class="field" style="margin:0;">
+          <label for="bgColor">Border</label>
+          <input type="color" id="bgColor" value="#f7f4ed" />
+        </div>
+        <div class="field" style="margin:0;">
+          <label for="textColor">Text</label>
+          <input type="color" id="textColor" value="#1c1917" />
+        </div>
+        <div class="field" style="margin:0;">
+          <label for="accentColor">Brand</label>
+          <input type="color" id="accentColor" value="#008e5b" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="borderScale">Border Size: <span id="borderVal">4.5%</span></label>
+        <input type="range" id="borderScale" min="1" max="10" step="0.5" value="4.5" />
+      </div>
+
+      <div class="field">
+        <label for="footerScale">Footer Height: <span id="footerVal">12%</span></label>
+        <input type="range" id="footerScale" min="8" max="20" step="0.5" value="12" />
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="showLogo" checked />
+        Show camera brand logo (auto-detects Fujifilm)
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="showLens" checked />
+        Show lens model (if available)
+      </label>
+
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn secondary" id="saveNewBtn" type="button">Save as New</button>
+        <button class="btn secondary" id="updateTplBtn" type="button">Update Saved</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">3. Extracted EXIF (Read-Only)</div>
+      <div class="row-2">
+        <div class="field">
+          <label for="makeInput">Brand</label>
+          <input type="text" id="makeInput" placeholder="FUJIFILM" readonly />
+        </div>
+        <div class="field">
+          <label for="cameraInput">Camera Model</label>
+          <input type="text" id="cameraInput" placeholder="X-T5" readonly />
+        </div>
+      </div>
+      <div class="field">
+        <label for="lensInput">Lens</label>
+        <input type="text" id="lensInput" placeholder="XF 35mm F1.4 R" readonly />
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="focalInput">Focal</label>
+          <input type="text" id="focalInput" placeholder="35mm" readonly />
+        </div>
+        <div class="field">
+          <label for="apertureInput">Aperture</label>
+          <input type="text" id="apertureInput" placeholder="f/1.4" readonly />
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="shutterInput">Shutter</label>
+          <input type="text" id="shutterInput" placeholder="1/500s" readonly />
+        </div>
+        <div class="field">
+          <label for="isoInput">ISO</label>
+          <input type="text" id="isoInput" placeholder="ISO 160" readonly />
+        </div>
+      </div>
+      <div class="field">
+        <label for="signatureInput">Signature / Instagram Handle</label>
+        <input type="text" id="signatureInput" placeholder="@yourhandle" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="exportFormat">Export Format</label>
+      <select id="exportFormat">
+        <option value="png" selected>Lossless PNG (Zero Compression)</option>
+        <option value="jpeg">JPEG (100% Max Quality)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Destination Folder</label>
+      <div class="btn-row">
+        <button class="btn secondary" id="selectFolderBtn" type="button">Choose Folder</button>
+        <button class="btn secondary" id="clearFolderBtn" type="button" disabled>Use Downloads</button>
+      </div>
+      <div class="status" id="folderStatus" style="margin-top:4px;">Default: Browser Downloads</div>
+    </div>
+    <button class="btn" id="downloadBtn" disabled>Save Framed Photo</button>
+  </aside>
+
+  <main>
+    <div class="empty-state" id="emptyState">
+      Drop any JPEG from your Fujifilm (or any camera) on the left to automatically extract EXIF metadata, apply the brand logo, tinker with templates, and preview before posting to Instagram.
+    </div>
+    <canvas id="canvas"></canvas>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "exif_frame_studio_templates_v1";
+
+    const DEFAULT_TEMPLATES = [
+      {
+        id: "fujifilm_signature",
+        name: "Fujifilm Signature",
+        layout: "split",
+        builtin: true,
+        bg: "#f7f4ed",
+        text: "#1c1917",
+        secondary: "#78716c",
+        accent: "#008e5b",
+        border: 4.5,
+        footer: 12,
+        showLogo: true,
+        showLens: true,
+        signature: ""
+      },
+      {
+        id: "oneline_classic",
+        name: "OneLine Classic",
+        layout: "split",
+        builtin: true,
+        bg: "#ffffff",
+        text: "#111827",
+        secondary: "#6b7280",
+        accent: "#111827",
+        border: 4,
+        footer: 11.5,
+        showLogo: true,
+        showLens: true,
+        signature: ""
+      },
+      {
+        id: "minimal_dark",
+        name: "Minimal Dark",
+        layout: "split",
+        builtin: true,
+        bg: "#111317",
+        text: "#f9fafb",
+        secondary: "#9ca3af",
+        accent: "#ffffff",
+        border: 4,
+        footer: 11.5,
+        showLogo: true,
+        showLens: true,
+        signature: ""
+      },
+      {
+        id: "polaroid_clean",
+        name: "Gallery Polaroid",
+        layout: "centered",
+        builtin: true,
+        bg: "#ffffff",
+        text: "#18181b",
+        secondary: "#71717a",
+        accent: "#008e5b",
+        border: 5.5,
+        footer: 16,
+        showLogo: true,
+        showLens: true,
+        signature: ""
+      },
+      {
+        id: "semi_blur_card",
+        name: "Semi-Utils Blur",
+        layout: "blur_card",
+        builtin: true,
+        bg: "#18181b",
+        text: "#ffffff",
+        secondary: "#e5e7eb",
+        accent: "#ffffff",
+        border: 6,
+        footer: 13,
+        showLogo: true,
+        showLens: true,
+        signature: ""
+      },
+      {
+        id: "museum_keyline",
+        name: "Museum Keyline",
+        layout: "keyline",
+        builtin: true,
+        bg: "#faf8f5",
+        text: "#1c1917",
+        secondary: "#78716c",
+        accent: "#1c1917",
+        border: 7,
+        footer: 14,
+        showLogo: true,
+        showLens: true,
+        signature: ""
+      }
+    ];
+
+    const fileInput = document.getElementById("fileInput");
+    const dropzone = document.getElementById("dropzone");
+    const statusEl = document.getElementById("status");
+    const emptyState = document.getElementById("emptyState");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const exportFormat = document.getElementById("exportFormat");
+    const selectFolderBtn = document.getElementById("selectFolderBtn");
+    const clearFolderBtn = document.getElementById("clearFolderBtn");
+    const folderStatus = document.getElementById("folderStatus");
+    let selectedDirHandle = null;
+    const templateGrid = document.getElementById("templateGrid");
+    const activeTplLabel = document.getElementById("activeTplLabel");
+    const saveNewBtn = document.getElementById("saveNewBtn");
+    const updateTplBtn = document.getElementById("updateTplBtn");
+
+    const inputs = {
+      bgColor: document.getElementById("bgColor"),
+      textColor: document.getElementById("textColor"),
+      accentColor: document.getElementById("accentColor"),
+      borderScale: document.getElementById("borderScale"),
+      borderVal: document.getElementById("borderVal"),
+      footerScale: document.getElementById("footerScale"),
+      footerVal: document.getElementById("footerVal"),
+      showLogo: document.getElementById("showLogo"),
+      showLens: document.getElementById("showLens"),
+      make: document.getElementById("makeInput"),
+      camera: document.getElementById("cameraInput"),
+      lens: document.getElementById("lensInput"),
+      focal: document.getElementById("focalInput"),
+      aperture: document.getElementById("apertureInput"),
+      shutter: document.getElementById("shutterInput"),
+      iso: document.getElementById("isoInput"),
+      signature: document.getElementById("signatureInput")
+    };
+
+    let templates = loadTemplates();
+    let activeTemplateId = templates[0].id;
+    let loadedImage = null;
+    let currentOrientation = 1;
+    let currentFilename = "framed-photo.jpg";
+
+    function loadTemplates() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (Array.isArray(saved) && saved.length > 0) {
+          return [...DEFAULT_TEMPLATES, ...saved];
+        }
+      } catch (_) {}
+      return [...DEFAULT_TEMPLATES];
+    }
+
+    function persistCustomTemplates() {
+      const custom = templates.filter((t) => !t.builtin);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
+    }
+
+    function renderTemplateGrid() {
+      templateGrid.innerHTML = "";
+      templates.forEach((tpl) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tpl-card" + (tpl.id === activeTemplateId ? " active" : "");
+        btn.innerHTML = `
+          <div class="tpl-swatch">
+            <span class="swatch-box" style="background:${tpl.bg}"></span>
+            <span class="swatch-box" style="background:${tpl.accent}"></span>
+          </div>
+          <div class="tpl-name">${tpl.name}</div>
+          <div class="tpl-tag">${tpl.builtin ? "Built-in" : "Saved Custom"}</div>
+        `;
+        btn.addEventListener("click", () => applyTemplate(tpl.id));
+        templateGrid.appendChild(btn);
+      });
+
+      const active = templates.find((t) => t.id === activeTemplateId);
+      activeTplLabel.textContent = active ? active.name : "";
+      updateTplBtn.disabled = !active || active.builtin;
+    }
+
+    function applyTemplate(id) {
+      const tpl = templates.find((t) => t.id === id);
+      if (!tpl) return;
+      activeTemplateId = tpl.id;
+      inputs.bgColor.value = tpl.bg;
+      inputs.textColor.value = tpl.text;
+      inputs.accentColor.value = tpl.accent;
+      inputs.borderScale.value = tpl.border;
+      inputs.borderVal.textContent = tpl.border + "%";
+      inputs.footerScale.value = tpl.footer;
+      inputs.footerVal.textContent = tpl.footer + "%";
+      inputs.showLogo.checked = tpl.showLogo;
+      inputs.showLens.checked = tpl.showLens;
+      if (tpl.signature) inputs.signature.value = tpl.signature;
+      renderTemplateGrid();
+      render();
+    }
+
+    function getCurrentTinkeredSettings(name, id, builtin = false) {
+      const active = templates.find((t) => t.id === activeTemplateId);
+      return {
+        id,
+        name,
+        layout: active ? active.layout || "split" : "split",
+        builtin,
+        bg: inputs.bgColor.value,
+        text: inputs.textColor.value,
+        secondary: "#78716c",
+        accent: inputs.accentColor.value,
+        border: Number(inputs.borderScale.value),
+        footer: Number(inputs.footerScale.value),
+        showLogo: inputs.showLogo.checked,
+        showLens: inputs.showLens.checked,
+        signature: inputs.signature.value.trim()
+      };
+    }
+
+    saveNewBtn.addEventListener("click", () => {
+      const name = prompt("Name for your custom template:", "My Fujifilm Preset");
+      if (!name || !name.trim()) return;
+      const id = "custom_" + Date.now();
+      const newTpl = getCurrentTinkeredSettings(name.trim(), id, false);
+      templates.push(newTpl);
+      activeTemplateId = id;
+      persistCustomTemplates();
+      renderTemplateGrid();
+      statusEl.textContent = `Saved template "${newTpl.name}"`;
+    });
+
+    updateTplBtn.addEventListener("click", () => {
+      const idx = templates.findIndex((t) => t.id === activeTemplateId && !t.builtin);
+      if (idx === -1) return;
+      templates[idx] = getCurrentTinkeredSettings(templates[idx].name, templates[idx].id, false);
+      persistCustomTemplates();
+      renderTemplateGrid();
+      statusEl.textContent = `Updated template "${templates[idx].name}"`;
+    });
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files[0]) handleFile(e.target.files[0]);
+    });
+
+    Object.values(inputs).forEach((el) => {
+      if (el && el.tagName) {
+        el.addEventListener("input", () => {
+          inputs.borderVal.textContent = inputs.borderScale.value + "%";
+          inputs.footerVal.textContent = inputs.footerScale.value + "%";
+          render();
+        });
+        el.addEventListener("change", render);
+      }
+    });
+
+    const FOLDER_DB_NAME = "exif_frame_folder_db";
+    const FOLDER_STORE = "handles";
+
+    function openFolderDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(FOLDER_DB_NAME, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(FOLDER_STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveFolderHandle(handle) {
+      try {
+        const db = await openFolderDb();
+        const tx = db.transaction(FOLDER_STORE, "readwrite");
+        tx.objectStore(FOLDER_STORE).put(handle, "export_dir");
+      } catch (_) {}
+    }
+
+    async function loadFolderHandle() {
+      try {
+        const db = await openFolderDb();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(FOLDER_STORE, "readonly");
+          const req = tx.objectStore(FOLDER_STORE).get("export_dir");
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function clearSavedFolderHandle() {
+      try {
+        const db = await openFolderDb();
+        const tx = db.transaction(FOLDER_STORE, "readwrite");
+        tx.objectStore(FOLDER_STORE).delete("export_dir");
+      } catch (_) {}
+    }
+
+    (async function restoreSavedFolder() {
+      const saved = await loadFolderHandle();
+      if (saved) {
+        selectedDirHandle = saved;
+        folderStatus.textContent = `Folder: ${saved.name} (saved)`;
+        clearFolderBtn.disabled = false;
+      }
+    })();
+
+    selectFolderBtn.addEventListener("click", async () => {
+      if (typeof window.showDirectoryPicker !== "function") {
+        folderStatus.textContent = "Folder picker requires Chrome, Edge, or Arc (falling back to Downloads).";
+        return;
+      }
+      try {
+        selectedDirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        await saveFolderHandle(selectedDirHandle);
+        folderStatus.textContent = `Folder: ${selectedDirHandle.name}`;
+        clearFolderBtn.disabled = false;
+      } catch (err) {
+        if (err && err.name !== "AbortError") {
+          folderStatus.textContent = "Could not access folder (using Downloads).";
+        }
+      }
+    });
+
+    clearFolderBtn.addEventListener("click", async () => {
+      selectedDirHandle = null;
+      await clearSavedFolderHandle();
+      folderStatus.textContent = "Default: Browser Downloads";
+      clearFolderBtn.disabled = true;
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      if (!loadedImage) return;
+      const fmt = exportFormat.value === "jpeg" ? "jpeg" : "png";
+      const mime = fmt === "jpeg" ? "image/jpeg" : "image/png";
+      const ext = fmt === "jpeg" ? "jpg" : "png";
+      const outName = `${currentFilename.replace(/\.[^.]+$/, "")}-framed.${ext}`;
+
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = "Saving...";
+
+      canvas.toBlob(
+        async (blob) => {
+          if (blob) {
+            if (selectedDirHandle) {
+              try {
+                let perm = await selectedDirHandle.queryPermission({ mode: "readwrite" });
+                if (perm !== "granted") {
+                  perm = await selectedDirHandle.requestPermission({ mode: "readwrite" });
+                }
+                if (perm !== "granted") {
+                  throw new Error("Permission denied");
+                }
+                const fileHandle = await selectedDirHandle.getFileHandle(outName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                statusEl.textContent = `Saved ${outName} to "${selectedDirHandle.name}"`;
+              } catch (err) {
+                triggerBrowserDownload(blob, outName);
+                statusEl.textContent = `Folder write failed; downloaded ${outName} instead.`;
+              }
+            } else {
+              triggerBrowserDownload(blob, outName);
+              statusEl.textContent = `Downloaded ${outName}`;
+            }
+          }
+          downloadBtn.disabled = false;
+          downloadBtn.textContent = "Save Framed Photo";
+        },
+        mime,
+        1.0
+      );
+    });
+
+    function triggerBrowserDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = url;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function handleFile(file) {
+      currentFilename = file.name;
+      statusEl.textContent = `Reading ${file.name}...`;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const buffer = e.target.result;
+        const exif = parseExif(buffer);
+        currentOrientation = exif.Orientation || 1;
+
+        const make = (exif.Make || "").trim();
+        let model = (exif.Model || "").trim();
+        if (make && model && model.toLowerCase().startsWith(make.toLowerCase())) {
+          model = model.slice(make.length).trim();
+        }
+
+        inputs.make.value = make;
+        inputs.camera.value = model;
+        inputs.lens.value = (exif.LensModel || "").trim();
+        inputs.focal.value = exif.FocalLength ? `${Math.round(exif.FocalLength)}mm` : "";
+        inputs.aperture.value = exif.FNumber ? `f/${Number(exif.FNumber.toFixed(1))}` : "";
+        inputs.shutter.value = formatShutter(exif.ExposureTime);
+        inputs.iso.value = exif.ISO ? `ISO ${exif.ISO}` : "";
+
+        const blob = new Blob([buffer], { type: file.type || "image/jpeg" });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+          URL.revokeObjectURL(url);
+          emptyState.style.display = "none";
+          canvas.style.display = "block";
+          downloadBtn.disabled = false;
+          const isFuji = make.toUpperCase().includes("FUJIFILM");
+          statusEl.textContent = isFuji
+            ? `Loaded ${file.name} · Fujifilm detected (logo enabled)`
+            : `Loaded ${file.name} · EXIF extracted`;
+          render();
+        };
+        img.src = url;
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function formatShutter(val) {
+      if (!val || val <= 0) return "";
+      if (val >= 1) return `${Number(val.toFixed(1))}s`;
+      return `1/${Math.round(1 / val)}s`;
+    }
+
+    const FUJIFILM_SVG_PATH =
+      "M18.288 10v3.129c0 .204.096.313.3.313h1.034v.352c0 .04-.028.068-.068.068h-1.672c-.518 0-.6-.284-.6-.544v-3.1c0-.148.056-.216.232-.216h.774m-1.916 0v3.656c0 .164-.068.204-.204.204h-.788v-3.655c0-.125.04-.205.216-.205h.776M0 10.532c0-.3 0-.53.49-.53h2.12v.366c0 .028-.012.054-.054.054H1.28c-.162 0-.244.083-.244.26v.979h1.496v.393c0 .04-.028.054-.056.054h-1.44v1.55c0 .15-.082.204-.246.204H0v-3.33m4.148-.531v2.95c0 .26.04.434.216.53.232.136.64.136.884 0 .164-.096.232-.244.232-.53v-2.76c0-.122.04-.19.218-.19h.774v2.853c0 .667-.42.94-.788 1.035a3.592 3.592 0 0 1-1.7 0c-.558-.164-.816-.49-.816-1.035v-2.663c0-.122.04-.204.19-.204h.79M22.872 10c-.19 0-.314.094-.354.272l-.626 2.663h-.014L21.212 10h-.884c-.176 0-.23.08-.23.23v3.644h.38c.054 0 .08-.026.08-.094v-3.06h.056l.802 3.14h.53c.204 0 .272-.08.328-.272l.72-2.868h.054v3.14h.708c.176 0 .244-.069.244-.23V10h-1.128m-11.708 2.093h-.992v1.767h.788c.136 0 .204-.04.204-.205v-1.562m-.054-.747c.04-.028.054-.056.054-.11V10h-.776c-.176 0-.216.08-.216.204v1.875l.938-.733m-3.4 2.216c.436-.055.572-.314.572-.695v-2.663c0-.164.08-.204.19-.204h.788v2.513c0 .612-.136.927-.49 1.198-.19.136-.516.3-1.25.3-.408 0-.6-.028-.626-.028-.04-.014-.054-.028-.054-.056v-.326c.204-.014.584 0 .87-.04M12.674 10c-.49 0-.49.244-.49.53v.992c0 .028-.014.028-.014.04l-.68.532h.694v1.766h.788c.164 0 .244-.054.244-.204v-1.562h1.442c.028 0 .054-.014.054-.056v-.394h-1.496v-.98c0-.176.082-.256.26-.256h1.278c.04 0 .054-.028.054-.056V10h-2.134";
+    const fujiPath2D = typeof Path2D !== "undefined" ? new Path2D(FUJIFILM_SVG_PATH) : null;
+
+    function drawBrandBadge(make, x, centerY, titleSize, accentColor, textColor) {
+      const upper = make.toUpperCase().trim();
+      if (!upper) return 0;
+
+      const isFuji = upper.includes("FUJIFILM");
+      if (isFuji && fujiPath2D) {
+        const logoH = Math.max(Math.round(titleSize * 1.15), 22);
+        const scale = logoH / 4.3;
+        const logoW = 24 * scale;
+
+        ctx.save();
+        ctx.translate(x, centerY - 12.15 * scale);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = accentColor;
+        ctx.fill(fujiPath2D);
+        ctx.restore();
+
+        return logoW + Math.round(titleSize * 0.75);
+      }
+
+      const label = upper.split(/\s+/)[0];
+      const fontSize = Math.max(Math.round(titleSize * 0.62), 14);
+      ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+      const metrics = ctx.measureText(label);
+      const padX = Math.max(Math.round(titleSize * 0.45), 10);
+      const boxW = metrics.width + padX * 2;
+      const boxH = Math.round(fontSize * 1.85);
+      const top = centerY - boxH / 2;
+
+      ctx.fillStyle = textColor;
+      ctx.beginPath();
+      ctx.roundRect(x, top, boxW, boxH, Math.max(boxH * 0.18, 4));
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, x + padX, centerY + 1);
+
+      return boxW + Math.round(titleSize * 0.55);
+    }
+
+    function render() {
+      if (!loadedImage) return;
+
+      const activeTpl = templates.find((t) => t.id === activeTemplateId);
+      const layoutMode = activeTpl ? activeTpl.layout || "split" : "split";
+
+      const bg = inputs.bgColor.value;
+      const primary = inputs.textColor.value;
+      const accent = inputs.accentColor.value;
+      const secondary = layoutMode === "blur_card" ? "#e5e7eb" : "#78716c";
+
+      const swapDims = currentOrientation >= 5 && currentOrientation <= 8;
+      const imgW = swapDims ? loadedImage.naturalHeight : loadedImage.naturalWidth;
+      const imgH = swapDims ? loadedImage.naturalWidth : loadedImage.naturalHeight;
+
+      const shortSide = Math.min(imgW, imgH);
+      const pad = Math.round(shortSide * (Number(inputs.borderScale.value) / 100));
+      const footerH = Math.max(Math.round(shortSide * (Number(inputs.footerScale.value) / 100)), 110);
+
+      canvas.width = imgW + pad * 2;
+      canvas.height = imgH + pad + footerH;
+
+      if (layoutMode === "blur_card") {
+        // Blurred photo backdrop inspired by semi-utils / copicseal
+        ctx.save();
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.filter = `blur(${Math.max(Math.round(shortSide * 0.04), 30)}px) brightness(0.62)`;
+        ctx.drawImage(loadedImage, -pad, -pad, canvas.width + pad * 2, canvas.height + pad * 2);
+        ctx.restore();
+
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+        ctx.shadowBlur = Math.max(Math.round(shortSide * 0.03), 24);
+        ctx.shadowOffsetY = Math.max(Math.round(shortSide * 0.012), 10);
+        ctx.translate(pad, pad);
+        applyOrientationTransform(ctx, currentOrientation, loadedImage.naturalWidth, loadedImage.naturalHeight);
+        ctx.drawImage(loadedImage, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.translate(pad, pad);
+        applyOrientationTransform(ctx, currentOrientation, loadedImage.naturalWidth, loadedImage.naturalHeight);
+        ctx.drawImage(loadedImage, 0, 0);
+        ctx.restore();
+
+        if (layoutMode === "keyline") {
+          const gap = Math.max(Math.round(shortSide * 0.008), 6);
+          ctx.strokeStyle = secondary;
+          ctx.lineWidth = Math.max(Math.round(shortSide * 0.0015), 1.5);
+          ctx.strokeRect(pad - gap, pad - gap, imgW + gap * 2, imgH + gap * 2);
+        }
+      }
+
+      const centerY = pad + imgH + footerH / 2;
+      let leftX = pad;
+      const rightX = canvas.width - pad;
+
+      const titleSize = Math.max(Math.round(shortSide * 0.024), 22);
+      const subSize = Math.max(Math.round(shortSide * 0.017), 16);
+
+      const makeText = inputs.make.value.trim();
+      const cameraText = inputs.camera.value.trim() || (!inputs.showLogo.checked ? makeText : "");
+      const lensText = inputs.showLens.checked ? inputs.lens.value.trim() : "";
+      const sigText = inputs.signature.value.trim();
+
+      const settingsText = [
+        inputs.focal.value.trim(),
+        inputs.aperture.value.trim(),
+        inputs.shutter.value.trim(),
+        inputs.iso.value.trim()
+      ].filter(Boolean).join("   ·   ");
+
+      if (layoutMode === "centered" || layoutMode === "keyline") {
+        // Centered Polaroid / Museum layout
+        const topY = centerY - titleSize * 0.6;
+        const botY = centerY + titleSize * 0.65;
+
+        if (inputs.showLogo.checked && makeText) {
+          const isFuji = makeText.toUpperCase().includes("FUJIFILM");
+          if (isFuji && fujiPath2D) {
+            const logoH = Math.max(Math.round(titleSize * 1.05), 20);
+            const scale = logoH / 4.3;
+            const logoW = 24 * scale;
+            const labelW = cameraText ? (ctx.measureText(cameraText).width + titleSize * 0.5) : 0;
+            const startX = canvas.width / 2 - (logoW + (cameraText ? titleSize * 0.4 + cameraText.length * titleSize * 0.52 : 0)) / 2;
+
+            ctx.save();
+            ctx.translate(cameraText ? startX : canvas.width / 2 - logoW / 2, topY - 12.15 * scale);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = accent;
+            ctx.fill(fujiPath2D);
+            ctx.restore();
+
+            if (cameraText) {
+              ctx.fillStyle = primary;
+              ctx.font = `600 ${titleSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+              ctx.textAlign = "left";
+              ctx.textBaseline = "middle";
+              ctx.fillText(cameraText, startX + logoW + titleSize * 0.45, topY);
+            }
+          } else {
+            ctx.fillStyle = primary;
+            ctx.font = `600 ${titleSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText([makeText, cameraText].filter(Boolean).join(" "), canvas.width / 2, topY);
+          }
+        } else if (cameraText) {
+          ctx.fillStyle = primary;
+          ctx.font = `600 ${titleSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(cameraText, canvas.width / 2, topY);
+        }
+
+        const bottomLine = [lensText, settingsText, sigText].filter(Boolean).join("   ·   ");
+        if (bottomLine) {
+          ctx.fillStyle = secondary;
+          ctx.font = `400 ${subSize}px "SF Mono", Menlo, Monaco, monospace`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(bottomLine, canvas.width / 2, botY);
+        }
+        return;
+      }
+
+      // Split layout (Fujifilm Signature, OneLine Classic, Minimal Dark, Semi-Utils Blur)
+      if (inputs.showLogo.checked && makeText) {
+        leftX += drawBrandBadge(makeText, leftX, centerY, titleSize, accent, primary);
+      }
+
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+
+      if (cameraText && lensText) {
+        ctx.fillStyle = primary;
+        ctx.font = `600 ${titleSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+        ctx.fillText(cameraText, leftX, centerY - titleSize * 0.52);
+
+        ctx.fillStyle = secondary;
+        ctx.font = `400 ${subSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`;
+        ctx.fillText(lensText, leftX, centerY + titleSize * 0.58);
+      } else if (cameraText || lensText) {
+        ctx.fillStyle = primary;
+        ctx.font = `600 ${titleSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+        ctx.fillText(cameraText || lensText, leftX, centerY);
+      }
+
+      ctx.textAlign = "right";
+      if (settingsText && sigText) {
+        ctx.fillStyle = primary;
+        ctx.font = `500 ${Math.round(titleSize * 0.92)}px "SF Mono", Menlo, Monaco, monospace`;
+        ctx.fillText(settingsText, rightX, centerY - titleSize * 0.52);
+
+        ctx.fillStyle = secondary;
+        ctx.font = `400 ${subSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`;
+        ctx.fillText(sigText, rightX, centerY + titleSize * 0.58);
+      } else if (settingsText || sigText) {
+        ctx.fillStyle = primary;
+        ctx.font = `500 ${Math.round(titleSize * 0.95)}px "SF Mono", Menlo, Monaco, monospace`;
+        ctx.fillText(settingsText || sigText, rightX, centerY);
+      }
+    }
+
+    function applyOrientationTransform(ctx, orientation, w, h) {
+      switch (orientation) {
+        case 2: ctx.transform(-1, 0, 0, 1, w, 0); break;
+        case 3: ctx.transform(-1, 0, 0, -1, w, h); break;
+        case 4: ctx.transform(1, 0, 0, -1, 0, h); break;
+        case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+        case 6: ctx.transform(0, 1, -1, 0, h, 0); break;
+        case 7: ctx.transform(0, -1, -1, 0, h, w); break;
+        case 8: ctx.transform(0, -1, 1, 0, 0, w); break;
+        default: break;
+      }
+    }
+
+    function parseExif(buffer) {
+      const view = new DataView(buffer);
+      const result = {};
+      if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) return result;
+      let offset = 2;
+      while (offset + 4 < view.byteLength) {
+        const marker = view.getUint16(offset, false);
+        offset += 2;
+        if (marker === 0xFFE1) {
+          if (view.getUint32(offset + 2, false) === 0x45786966) {
+            return readTiff(view, offset + 8);
+          }
+          break;
+        }
+        if ((marker & 0xFF00) !== 0xFF00) break;
+        offset += view.getUint16(offset, false);
+      }
+      return result;
+    }
+
+    function readTiff(view, tiffStart) {
+      const out = {};
+      const endian = view.getUint16(tiffStart, false);
+      const little = endian === 0x4949;
+      if (!little && endian !== 0x4D4D) return out;
+      const firstIfdOffset = view.getUint32(tiffStart + 4, little);
+      const ifd0 = readIfd(view, tiffStart, tiffStart + firstIfdOffset, little);
+      if (ifd0[0x010F]) out.Make = ifd0[0x010F];
+      if (ifd0[0x0110]) out.Model = ifd0[0x0110];
+      if (ifd0[0x0112]) out.Orientation = ifd0[0x0112];
+      if (ifd0[0x8769]) {
+        const exifIfd = readIfd(view, tiffStart, tiffStart + ifd0[0x8769], little);
+        if (exifIfd[0x829A]) out.ExposureTime = exifIfd[0x829A];
+        if (exifIfd[0x829D]) out.FNumber = exifIfd[0x829D];
+        if (exifIfd[0x8827]) out.ISO = Array.isArray(exifIfd[0x8827]) ? exifIfd[0x8827][0] : exifIfd[0x8827];
+        if (exifIfd[0x920A]) out.FocalLength = exifIfd[0x920A];
+        if (exifIfd[0xA434]) out.LensModel = exifIfd[0xA434];
+      }
+      return out;
+    }
+
+    function readIfd(view, tiffStart, dirStart, little) {
+      const tags = {};
+      if (dirStart + 2 > view.byteLength) return tags;
+      const entries = view.getUint16(dirStart, little);
+      for (let i = 0; i < entries; i++) {
+        const entry = dirStart + 2 + i * 12;
+        if (entry + 12 > view.byteLength) break;
+        const tag = view.getUint16(entry, little);
+        const type = view.getUint16(entry + 2, little);
+        const count = view.getUint32(entry + 4, little);
+        const val = readTagValue(view, tiffStart, type, count, entry + 8, little);
+        if (val !== undefined) tags[tag] = val;
+      }
+      return tags;
+    }
+
+    function readTagValue(view, tiffStart, type, count, valueOffset, little) {
+      const typeSizes = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
+      const byteLen = (typeSizes[type] || 1) * count;
+      const dataOffset = byteLen > 4 ? tiffStart + view.getUint32(valueOffset, little) : valueOffset;
+      if (dataOffset + byteLen > view.byteLength) return undefined;
+      if (type === 2) {
+        let str = "";
+        for (let i = 0; i < count - 1; i++) {
+          const ch = view.getUint8(dataOffset + i);
+          if (ch === 0) break;
+          str += String.fromCharCode(ch);
+        }
+        return str;
+      }
+      if (type === 3) {
+        if (count === 1) return view.getUint16(dataOffset, little);
+        return Array.from({ length: count }, (_, i) => view.getUint16(dataOffset + i * 2, little));
+      }
+      if (type === 4) {
+        if (count === 1) return view.getUint32(dataOffset, little);
+        return Array.from({ length: count }, (_, i) => view.getUint32(dataOffset + i * 4, little));
+      }
+      if (type === 5) {
+        const num = view.getUint32(dataOffset, little);
+        const den = view.getUint32(dataOffset + 4, little);
+        return den ? num / den : 0;
+      }
+      if (type === 10) {
+        const num = view.getInt32(dataOffset, little);
+        const den = view.getInt32(dataOffset + 4, little);
+        return den ? num / den : 0;
+      }
+      return undefined;
+    }
+
+    applyTemplate(activeTemplateId);
+  </script>
+</body>
+</html>

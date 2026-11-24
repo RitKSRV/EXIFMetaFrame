@@ -1,0 +1,20 @@
+{
+  "name": "fujifilm_signature",
+  "display_name": "Fujifilm Signature",
+  "description": "Tailored for Fujifilm bodies with automatic FUJIFILM badge, warm paper border, and classic typography.",
+  "theme": {
+    "background": "#F7F4ED",
+    "primary_text": "#1C1917",
+    "secondary_text": "#78716C",
+    "accent": "#008E5B"
+  },
+  "layout": {
+    "border_percent": 4.5,
+    "footer_height_percent": 12.5,
+    "show_brand_logo": true,
+    "show_lens": true,
+    "show_signature": true,
+    "separator": " | "
+  },
+  "signature": ""
+}

@@ -1,0 +1,20 @@
+{
+  "name": "minimal_dark",
+  "display_name": "Minimal Dark",
+  "description": "Sleek dark gallery mat for low-key, street, and night photography.",
+  "theme": {
+    "background": "#111317",
+    "primary_text": "#F9FAFB",
+    "secondary_text": "#9CA3AF",
+    "accent": "#3B82F6"
+  },
+  "layout": {
+    "border_percent": 4.0,
+    "footer_height_percent": 11.5,
+    "show_brand_logo": true,
+    "show_lens": true,
+    "show_signature": true,
+    "separator": " · "
+  },
+  "signature": ""
+}

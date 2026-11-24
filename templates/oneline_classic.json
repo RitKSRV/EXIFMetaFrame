@@ -1,0 +1,20 @@
+{
+  "name": "oneline_classic",
+  "display_name": "OneLine Classic",
+  "description": "Clean white border with camera & lens on the left, exposure settings on the right.",
+  "theme": {
+    "background": "#FFFFFF",
+    "primary_text": "#111827",
+    "secondary_text": "#6B7280",
+    "accent": "#111827"
+  },
+  "layout": {
+    "border_percent": 4.0,
+    "footer_height_percent": 11.5,
+    "show_brand_logo": true,
+    "show_lens": true,
+    "show_signature": true,
+    "separator": " · "
+  },
+  "signature": ""
+}
